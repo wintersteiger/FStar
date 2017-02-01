@@ -114,6 +114,7 @@ type decl =
   | Pop
   | CheckSat
   | GetUnsatCore
+  | GetProof
   | SetOption  of string * string
   | PrintStats
 type decls_t = list<decl>
@@ -476,6 +477,7 @@ let rec declToSmt z3options decl =
     format1 "(echo \"%s\")" s
   | CheckSat -> "(check-sat)"
   | GetUnsatCore -> "(echo \"<unsat-core>\")\n(get-unsat-core)\n(echo \"</unsat-core>\")"
+  | GetProof -> "(echo \"<proof>\")\n(get-proof)\n(echo \"</proof>\")"
   | Push -> "(push)"
   | Pop -> "(pop)"
   | SetOption (s, v) -> format2 "(set-option :%s %s)" s v
