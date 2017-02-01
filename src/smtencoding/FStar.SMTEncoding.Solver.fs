@@ -167,7 +167,7 @@ let ask_and_report_errors env all_labels prefix query suffix =
         @(if Options.record_hints() then [Term.GetUnsatCore] else [])
         @suffix in
 
-    let check (p:decl) =
+    let rec check (p:decl) =
         let rlimit = Prims.op_Multiply (Options.z3_rlimit ()) 544656 in
         let default_initial_config = Options.initial_fuel(), Options.initial_ifuel(), rlimit in
         let hint_opt = next_hint query_name query_index in
@@ -259,7 +259,21 @@ let ask_and_report_errors env all_labels prefix query suffix =
                                   ifuel=prev_ifuel;
                                   query_elapsed_time=elapsed_time;
                                   unsat_core=unsat_core } in
-                     record_hint (Some hint)
+                     record_hint (Some hint) ;
+                     if Options.check_hints() then
+                         let hint_cfg = hint.fuel, hint.ifuel, rlimit in
+                         let log_queries_before = Options.log_queries() in
+                         Options.set_option "log_queries" (Options.Bool false) ;
+                         let hint_check_cb used_hint (prev_fuel, prev_ifuel, timeout) (p:decl) alt (result, elapsed_time) =
+                            (BU.print "\tHint replay %s in %s milliseconds\n"
+                                      [(match result with
+                                       | Inl unsat_core -> "succeeded"
+                                       | Inr errs -> "FAILED") ;
+                                       BU.string_of_int elapsed_time ] ) in
+                         Z3.ask hint.unsat_core all_labels
+                                (with_fuel [] p hint_cfg)
+                                (hint_check_cb (Option.isSome hint.unsat_core) hint_cfg p []) ;
+                         Options.set_option "log_queries" (Options.Bool log_queries_before)
                 else record_hint hint_opt;
                 if Options.print_fuels()
                 || Options.hint_info()

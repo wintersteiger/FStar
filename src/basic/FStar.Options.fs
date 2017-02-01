@@ -138,6 +138,7 @@ let init () =
         ("print_z3_statistics"          , Bool false);
         ("prn"                          , Bool false);
         ("record_hints"                 , Bool false);
+        ("check_hints"                  , Bool false);
         ("reuse_hint_for"               , Unset);
         ("show_signatures"              , List []);
         ("silent"                       , Bool false);
@@ -222,6 +223,7 @@ let get_print_universes         ()      = lookup_opt "print_universes"          
 let get_print_z3_statistics     ()      = lookup_opt "print_z3_statistics"      as_bool
 let get_prn                     ()      = lookup_opt "prn"                      as_bool
 let get_record_hints            ()      = lookup_opt "record_hints"             as_bool
+let get_check_hints             ()      = lookup_opt "check_hints"             as_bool
 let get_reuse_hint_for          ()      = lookup_opt "reuse_hint_for"           (as_option as_string)
 let get_show_signatures         ()      = lookup_opt "show_signatures"          (as_list as_string)
 let get_silent                  ()      = lookup_opt "silent"                   as_bool
@@ -581,6 +583,11 @@ let rec specs () : list<Getopt.opt> =
         "Record a database of hints for efficient proof replay");
 
        ( noshort,
+        "check_hints",
+        ZeroArgs (fun () -> Bool true),
+        "Check new hints for replayability");
+
+       ( noshort,
         "reuse_hint_for",
         OneArg (String, "top-level name in the current module"),
         "Optimistically, attempt using the recorded hint for 'f' when trying to verify some other term 'g'");
@@ -911,6 +918,7 @@ let print_real_names             () = get_prn                         ()
 let print_universes              () = get_print_universes             ()
 let print_z3_statistics          () = get_print_z3_statistics         ()
 let record_hints                 () = get_record_hints                ()
+let check_hints                  () = get_check_hints                 ()
 let reuse_hint_for               () = get_reuse_hint_for              ()
 let silent                       () = get_silent                      ()
 let split_cases                  () = get_split_cases                 ()
@@ -936,8 +944,8 @@ let z3_timeout                   () = get_z3timeout                   ()
 let should_extract m =
   not (no_extract m) && (extract_all () ||
   (match get_extract_module () with
-  | [] -> 
-    (match get_extract_namespace () with 
+  | [] ->
+    (match get_extract_namespace () with
      | [] -> true
      | ns -> Util.for_some (Util.starts_with (String.lowercase m)) ns)
   | l -> List.contains (String.lowercase m) l))
