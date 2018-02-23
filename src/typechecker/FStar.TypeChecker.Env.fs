@@ -317,10 +317,12 @@ let inst_tscheme_with : tscheme -> universes -> universes * term = fun ts us ->
     match ts, us with
     | ([], t), [] -> [], t
     | (formals, t), _ ->
-      assert (List.length us = List.length formals);
-      let n = List.length formals - 1 in
-      let vs = us |> List.mapi (fun i u -> UN (n - i, u)) in
-      us, Subst.subst vs t
+      if formals.Length = 0 then [], t
+      else (
+        assert (List.length us = List.length formals);
+        let n = List.length formals - 1 in
+        let vs = us |> List.mapi (fun i u -> UN (n - i, u)) in
+        us, Subst.subst vs t)
 
 //Instantiate the universe variables in a type scheme with new unification variables
 let inst_tscheme : tscheme -> universes * term = function
